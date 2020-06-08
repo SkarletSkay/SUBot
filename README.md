@@ -1,2 +1,2 @@
 # SUBot
-Cool Bot
+the Coolest Bot ever
