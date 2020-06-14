@@ -1,0 +1,31 @@
+description:
+
+Hello! This bot is designed to facilitate connection between you and the Student Union (SU). This bot can help you to:
+
+send a request to SU about your idea of university's life improvement
+send a request to SU about your project
+send a complaint to SU
+check the status of the request
+
+
+SU core options:
+
+answer for a particular request
+view all active requests
+view all closed requests
+view all requests
+update the status of the request
+decline/accept the request for a project
+redirect the request to another person (representative, coordinator, mentor)
+
+
+after the new request:
+
+Your request was successfully sent to SU!
+
+
+different statuses:
+
+Your request was sent to SU
+SU is working on your request
+The request was closed
