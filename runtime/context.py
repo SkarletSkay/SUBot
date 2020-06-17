@@ -1,12 +1,12 @@
-from telegram import Update, User, Chat, Bot
+from telegram import Update, User, Chat, Bot, Message
 from datetime import datetime
 
 
 class Context:
 
-    def __init__(self, bot: Bot, user: User, chat: Chat):
+    def __init__(self, bot: Bot, user: User, chat: Chat, updates=None):
         self.__bot = bot
-        self.__prev_updates = []
+        self.__prev_updates = [] if updates is None else list(updates)
         self.__user = user
         self.__chat = chat
 
@@ -38,14 +38,17 @@ class Context:
 
 class MessageContext(Context):
 
-    def __init__(self, bot: Bot, user: User, chat: Chat):
-        super().__init__(bot, user, chat)
+    def __init__(self, bot: Bot, user: User, chat: Chat, updates=None):
+        super().__init__(bot, user, chat, updates)
         self.__message_id = 0
         self.__message_text = ""
         self.__date = datetime.min
 
     def add_update(self, update: Update):
         super().add_update(update)
+        # Callbacks appear as MessageContext since they are restored
+        # :see: pipeline.py, line 50 - fixed that
+        # :see: method __init__ of Context
         self.__message_id = update.message.message_id
         self.__date = update.message.date
         self.__message_text = update.message.text
@@ -68,16 +71,16 @@ class MessageContext(Context):
 
 class CallbackContext(Context):
 
-    def __init__(self, bot: Bot, user: User, chat: Chat):
-        super().__init__(bot, user, chat)
+    def __init__(self, bot: Bot, user: User, chat: Chat, updates=None):
+        super().__init__(bot, user, chat, updates)
         self.__callback_id = 0
-        self.__message_text = ""
+        self.__message = Message(0, 0, datetime.min, chat)
         self.__data = ""
 
     def add_update(self, update: Update):
         super().add_update(update)
         self.__callback_id = update.callback_query.id
-        self.__message_text = update.callback_query.message
+        self.__message = update.callback_query.message
         self.__data = update.callback_query.data
 
     @property
@@ -85,8 +88,8 @@ class CallbackContext(Context):
         return self.__callback_id
 
     @property
-    def text(self) -> str:
-        return self.__message_text
+    def message(self) -> Message:
+        return self.__message
 
     @property
     def data(self) -> str:

@@ -47,11 +47,16 @@ class MainDaemon(Thread):
             for update in updates_list:
                 for command in commands:
                     context = storage.restore_context(update.effective_user.id, update.effective_chat.id)
-                    if context is None:
-                        if update.message is not None:
+                    if update.message is not None and (context is None or isinstance(context, CallbackContext)):
+                        if context is None:
                             context = MessageContext(bot, update.effective_user, update.effective_chat)
-                        elif update.callback_query is not None:
+                        else:
+                            context = MessageContext(bot, update.effective_user, update.effective_chat, context.prev_updates)
+                    elif update.callback_query is not None and (context is None or isinstance(context, MessageContext)):
+                        if context is None:
                             context = CallbackContext(bot, update.effective_user, update.effective_chat)
+                        else:
+                            context = CallbackContext(bot, update.effective_user, update.effective_chat, context.prev_updates)
 
                     context.add_update(update)
                     command_instance: CommandHandlerBase = command(context)

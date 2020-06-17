@@ -37,6 +37,16 @@ class StartCommand(CommandHandlerBase):
         return True
 
 
+class NewRequestCommand(CommandHandlerBase):
+
+    def satisfy(self, update: Update) -> bool:
+        return update.message is not None and update.message.text == "/new_request"
+
+    def execute_async(self) -> bool:
+        from modules import UserRequest
+        return UserRequest.new_request(self)
+
+
 class MyCommand(CommandHandlerBase):
 
     def satisfy(self, update: Update) -> bool:
