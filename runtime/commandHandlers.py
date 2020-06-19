@@ -47,6 +47,16 @@ class NewRequestCommand(CommandHandlerBase):
         return UserRequest.new_request(self)
 
 
+class GetAllMessagesCommand(CommandHandlerBase):
+
+    def satisfy(self, update: Update) -> bool:
+        return update.message is not None and update.message.text == "/get_user_messages"
+
+    def execute_async(self) -> bool:
+        from modules import AdminRequest
+        return AdminRequest.get_all_messages(self)
+
+
 class MyCommand(CommandHandlerBase):
 
     def satisfy(self, update: Update) -> bool:
