@@ -1,6 +1,6 @@
 from runtime.commandHandlers import CommandHandlerBase
 from runtime.context import CallbackContext, MessageContext
-from CallbackKeyboard import CallbackKeyboard
+from modules.CallbackKeyboard import CallbackKeyboard
 
 categories = (
     'Project', 'Learning', 'Another category'
