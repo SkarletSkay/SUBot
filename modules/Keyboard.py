@@ -32,27 +32,36 @@ class CallbackKeyboard:
 
 
 class Keyboard:
-    @property
-    def commands(self) -> InlineKeyboardMarkup:
-        return CallbackKeyboard.from_dict({
+    """
+    A class with all the InlineKeyboardMarkup objects used by bot.
+    Defined in init, objects can be accessed using the class properties
+    """
+    def __init__(self):
+        self.__commands = CallbackKeyboard.from_dict({
             "Create a request": "/new_request"
         })
-
-    @property
-    def admin_commands(self) -> InlineKeyboardMarkup:
-        return CallbackKeyboard.from_dict({
+        self.__admin_commands = CallbackKeyboard.from_dict({
             "Create a request": "/new_request",
             "See user requests": "/get_user_messages"
         })
-
-    @property
-    def request_categories(self) -> InlineKeyboardMarkup:
-        return CallbackKeyboard.from_dict(dict(
+        self.__request_categories = CallbackKeyboard.from_dict(dict(
             [(category, f"/category {category}") for category in (
                 'Project', 'Learning', 'Another category'
             )])
         )
 
+    @property
+    def commands(self) -> InlineKeyboardMarkup:
+        return self.__commands
 
-keyboard = Keyboard()
-print(keyboard.admin_commands.to_json(), keyboard.admin_commands.to_json(), keyboard.request_categories.to_json())
+    @property
+    def admin_commands(self) -> InlineKeyboardMarkup:
+        return self.__admin_commands
+
+    @property
+    def request_categories(self) -> InlineKeyboardMarkup:
+        return self.__request_categories
+
+
+# properties may be used only in an instance of the class
+Keyboard = Keyboard()
