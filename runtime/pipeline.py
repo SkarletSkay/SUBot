@@ -1,72 +1,68 @@
-from runtime.configuration import Configuration
-from runtime.commandHandlers import CommandHandlerBase
-from runtime.contextStorage import DefaultContextStorage
-from runtime.context import MessageContext, CallbackContext
 from threading import Thread
+from typing import List
+
+from runtime.builder import ApplicationBuilder
+from runtime.context import Context
+from runtime.dependency_injection import services
+
+from runtime.middleware import Middleware
 
 
 class Pipeline:
 
     def __init__(self):
-        self.__configuration = None
+        self.__app_builder = None
         self.__polling_daemon = None
+        self.__services = None
 
-    def configure(self, configuration: Configuration):
-        self.__configuration = configuration
+    def configure(self, app_builder: ApplicationBuilder):
+        self.__app_builder = app_builder
 
     def start_polling(self):
-        if self.__configuration is None:
-            raise RuntimeError("Configuration should be set before starting bot")
+        if self.__app_builder is None:
+            raise RuntimeError("Cannot start the bot")
 
-        self.__polling_daemon = MainDaemon(self)
+        self.__polling_daemon = MainDaemon(self.__app_builder)
         self.__polling_daemon.start()
         self.__polling_daemon.join()
-
-    def get_configuration(self) -> Configuration:
-        return self.__configuration
 
 
 class MainDaemon(Thread):
 
-    def __init__(self, pipeline: Pipeline):
+    def __init__(self, app_builder: ApplicationBuilder):
         super().__init__(name="MainPipelineDaemon", daemon=True)
-        self.__pipeline = pipeline
-        self.__contextStorage = DefaultContextStorage()
+        self.__app_builder = app_builder
 
     def run(self):
-        configuration = self.__pipeline.get_configuration()
-        storage = self.__contextStorage
-        limit = configuration.updates_limit
-        timeout = configuration.timeout
-        commands = configuration.get_commands()
-        bot = configuration.get_bot()
+        limit = self.__app_builder.updates_limit
+        timeout = self.__app_builder.timeout
+        bot = self.__app_builder.bot
         offset = 0
 
         while True:
+            # get available updates
             updates_list = bot.get_updates(offset, limit, timeout)
-            for update in updates_list:
-                for command in commands:
-                    context = storage.restore_context(update.effective_user.id, update.effective_chat.id)
-                    if context is None:
-                        if update.message is not None:
-                            context = MessageContext(bot, update.effective_user, update.effective_chat)
-                        elif update.callback_query is not None:
-                            context = CallbackContext(bot, update.effective_user, update.effective_chat)
+            current_update_index: int = 0
 
-                    context.add_update(update)
-                    command_instance: CommandHandlerBase = command(context)
-                    if configuration.is_holding(update.effective_user.id, update.effective_chat.id, command) \
-                            or command_instance.satisfy(update):
+            while current_update_index < len(updates_list):
+                update = updates_list[current_update_index]
+                context = Context(update, bot)
+                components = self.__app_builder.build()
+                pipeline: List[Middleware] = list()
 
-                        executed = command_instance.execute_async()
-                        if command_instance.holding != 0:
-                            configuration.hold_for(update.effective_user.id, update.effective_chat.id,
-                                                   command, command_instance.holding)
+                for i in range(len(components) - 1, -1, -1):
+                    instance: Middleware = services.get_instance(components[i][0], hash(update.effective_chat.id))
+                    pipeline.append(instance)
+                    if components[i][1] is not None:
+                        instance.configure(components[i][1])
 
-                        if executed:
-                            offset = update.update_id + 1
+                    if i != len(components) - 1:
+                        instance.set_next(pipeline[len(components) - 2 - i].invoke)
 
-                        storage.store_context(update.effective_user.id, update.effective_chat.id, context)
-                        if configuration.is_holding(update.effective_user.id, update.effective_chat.id, command):
-                            configuration.decrease_holding(update.effective_user.id, update.effective_chat.id, command)
-                        break
+                pipeline.reverse()
+
+                if len(pipeline) != 0:
+                    pipeline[0].invoke(context)
+
+                offset = update.update_id + 1
+                current_update_index += 1

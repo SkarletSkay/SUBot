@@ -1,12 +1,15 @@
 from startup import Startup
-from runtime.configuration import Configuration
+from runtime.builder import ApplicationBuilder
+from runtime.dependency_injection import ServiceStorage
 from runtime.pipeline import Pipeline
 
 if __name__ == "__main__":
     startup = Startup()
-    configuration = Configuration()
-    startup.configure(configuration)
+    app_builder = ApplicationBuilder()
+    services = ServiceStorage()
+    startup.configure_services()
+    startup.configure(app_builder)
 
     pipeline = Pipeline()
-    pipeline.configure(configuration)
+    pipeline.configure(app_builder)
     pipeline.start_polling()
