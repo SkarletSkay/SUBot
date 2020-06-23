@@ -22,25 +22,21 @@ class CommandHandlerBase:
         return False
 
 
-class StartCommand(CommandHandlerBase):
+class HelpCommand(CommandHandlerBase):
 
     def satisfy(self, update: Update) -> bool:
-        if update.message is not None and update.message.text == "/start":
-            return True
-        else:
-            return False
+        return update.message is not None and update.message.text in ("/help", "/start")
 
     def execute_async(self) -> bool:
-        self.context.send_message("hello")
-        self.hold_next(4)
-
-        return True
+        from modules import Help
+        return Help.get_help(self)
 
 
 class NewRequestCommand(CommandHandlerBase):
 
     def satisfy(self, update: Update) -> bool:
-        return update.message is not None and update.message.text == "/new_request"
+        return update.message is not None and update.message.text == "/new_request" or \
+               update.callback_query is not None and update.callback_query.data == "/new_request"
 
     def execute_async(self) -> bool:
         from modules import UserRequest

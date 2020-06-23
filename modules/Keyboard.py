@@ -19,9 +19,9 @@ class CallbackKeyboard:
     @staticmethod
     def from_tuple(buttons: tuple, row_width: int = 1):
         """
-        Create an InlineKeyboardMarkup with given buttons passed as a dict, having a maximum of row_count button per row
+        Create an InlineKeyboardMarkup with given buttons passed as a tuple, having a maximum of row_count button per row
 
-        :param buttons: Dictionary with keys as button texts and values os their callback data
+        :param buttons: Tuple with values that are used as button text and callback data
         :param row_width: int, maximum buttons per row, defaults to 1
         """
         button_objects = [InlineKeyboardButton(text=key, callback_data=key) for key in buttons]
@@ -47,8 +47,9 @@ class Keyboard:
         self.__request_categories = CallbackKeyboard.from_dict(dict(
             [(category, f"/category {category}") for category in (
                 'Project', 'Learning', 'Another category'
-            )])
+            )] + [("Cancel", "Cancel")])
         )
+        self.__cancel_only = CallbackKeyboard.from_tuple(("Cancel",))
 
     @property
     def commands(self) -> InlineKeyboardMarkup:
@@ -61,6 +62,10 @@ class Keyboard:
     @property
     def request_categories(self) -> InlineKeyboardMarkup:
         return self.__request_categories
+
+    @property
+    def cancel_only(self) -> InlineKeyboardMarkup:
+        return self.__cancel_only
 
 
 # properties may be used only in an instance of the class
