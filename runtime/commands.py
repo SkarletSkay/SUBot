@@ -1,6 +1,6 @@
-from typing import List
+from typing import List, Tuple
 
-from telegram import Message, CallbackQuery, Bot
+from telegram import Message, CallbackQuery, Bot, ReplyMarkup
 
 from runtime.session import Session
 
@@ -76,17 +76,25 @@ class CommandsBase:
         result = MessageListResult(self.session.chat.id, messages_list)
         return result
 
-    def edit_message_text(self, message_id: int, new_text: str):
-        result = EditMessageTextResult(self.session.chat.id, message_id, new_text)
-        return result
-
-    def edit_message_markup(self, message_id: int, new_markup):
-        result = EditMessageMarkupResult(self.session.chat.id, message_id, new_markup)
+    def edit_message(self, message_id: int, new_text: str, new_markup: ReplyMarkup):
+        result = EditMessageResult(self.session.chat.id, message_id, new_text, new_markup)
         return result
 
     def reply_to_message(self, message_id: int, text: str, reply_markup):
         result = ReplyToMessageResult(message_id, self.session.chat.id, text, reply_markup)
         return result
+
+    def compound_result(self, results: Tuple[CommandResult, ...]):
+        return CompoundResult(list(results))
+
+
+class CompoundResult(CommandResult):
+    def __init__(self, results: List[CommandResult]):
+        self.__results = results
+
+    def execute(self, bot: Bot):
+        for result in self.__results:
+            result.execute(bot)
 
 
 class MessageResult(CommandResult):
@@ -133,14 +141,18 @@ class MessageListResult(CommandResult):
             bot.send_message(self.__chat_id, message)
 
 
-class EditMessageTextResult(CommandResult):
-    def __init__(self, chat_id: int, message_id: int, new_text: str):
+class EditMessageResult(CommandResult):
+    def __init__(self, chat_id: int, message_id: int, new_text: str, new_markup: ReplyMarkup):
         self.__chat_id = chat_id
         self.__message_id = message_id
         self.__new_text = new_text
+        self.__new_markup = new_markup
 
     def execute(self, bot: Bot):
-        bot.edit_message_text(self.__new_text, chat_id=self.__chat_id, message_id=self.__message_id)
+        if self.__new_text is not None:
+            bot.edit_message_text(self.__new_text, chat_id=self.__chat_id, message_id=self.__message_id)
+        if self.__new_markup is not None:
+            bot.edit_message_reply_markup(self.__chat_id, self.__message_id, reply_markup=self.__new_markup)
 
 
 class EditMessageMarkupResult(CommandResult):
