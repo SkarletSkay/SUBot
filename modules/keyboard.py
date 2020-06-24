@@ -66,7 +66,3 @@ class Keyboard:
     @property
     def cancel_only(self) -> InlineKeyboardMarkup:
         return self.__cancel_only
-
-
-# properties may be used only in an instance of the class
-Keyboard = Keyboard()
