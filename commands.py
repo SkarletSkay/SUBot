@@ -4,7 +4,10 @@ from runtime.commands import CommandsBase
 class GreetingsCommands(CommandsBase):
 
     def start_command(self, command: str):
-        return self.send_message_list(list(("Я", "Пидорас")))
+        return self.compound_result((
+            self.send_message("Я", None),
+            self.send_message("Пидорас", None),
+        ))
 
     def hello_command(self, command: str):
         if command == "/hello":

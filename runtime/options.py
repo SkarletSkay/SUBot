@@ -1,7 +1,4 @@
-from typing import Dict, Callable
-
-from telegram import Update, User, Chat
-
+from typing import Dict, Callable, List
 from runtime.context import Context
 
 
@@ -34,5 +31,5 @@ class CommandsOptions(Options):
     def use_error_handler(self, error_handler: Callable[[Exception, Context], None]):
         self["__error_handler__"] = error_handler
 
-    def use_commands_module(self, module):
-        self["__module__"] = module
+    def use_commands_modules(self, modules: List):
+        self["__modules__"] = modules
