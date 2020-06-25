@@ -50,6 +50,7 @@ class Keyboard:
             )] + [("Cancel", "Cancel")])
         )
         self.__cancel_only = CallbackKeyboard.from_tuple(("Cancel",))
+        self.__empty = InlineKeyboardMarkup([[]])
 
     @property
     def commands(self) -> InlineKeyboardMarkup:
@@ -66,3 +67,7 @@ class Keyboard:
     @property
     def cancel_only(self) -> InlineKeyboardMarkup:
         return self.__cancel_only
+
+    @property
+    def empty(self) -> InlineKeyboardMarkup:
+        return self.__empty

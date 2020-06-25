@@ -3,10 +3,7 @@ from runtime.context import Context
 from runtime.dependency_injection import services
 from runtime.options import CommandsOptions
 from runtime.middleware import CommandsMiddleware
-from modules.keyboard import Keyboard
-from modules.user_request import UserRequest
-from modules.help import Help
-import commands
+from modules import basic, user_request, keyboard
 
 
 class Startup:
@@ -14,9 +11,7 @@ class Startup:
     def configure_services(self):
         services.add_sessions()
         services.add_singleton(CommandsMiddleware)
-        services.add_singleton(Keyboard)
-        services.add_scoped(UserRequest)
-        services.add_transient(Help)
+        services.add_singleton(keyboard.Keyboard)
         pass
 
     def configure(self, app_builder: ApplicationBuilder):
@@ -27,5 +22,5 @@ class Startup:
 
     def configure_commands(self):
         options = CommandsOptions()
-        options.use_commands_module(commands)
+        options.use_commands_modules([basic, user_request])
         return options
