@@ -1,4 +1,4 @@
-from typing import Dict, Optional, Callable
+from typing import Dict, Optional, Callable, Tuple
 
 from runtime.options import Options
 from runtime.session import SessionControl, Session
@@ -31,25 +31,26 @@ class CommandsMiddleware(Middleware):
 
     def __init__(self, session_storage: SessionControl):
         super().__init__()
-        self.__commands_module = None
+        self.__commands_modules = None
         self.__suppress_command = False
         self.__error_handler = None
         self.__session_storage = session_storage
-        self.__functions_dict: Dict[str, str] = dict()
+        self.__functions_dict: Dict[str, Tuple[object, str]] = dict()
 
     def configure(self, options: Options):
         self.__suppress_command = options["__suppress_command_literals__"]
         self.__error_handler = options["__error_handler__"]
-        self.__commands_module = options["__module__"]
+        self.__commands_modules = options["__modules__"]
 
-        all_classes = inspect.getmembers(self.__commands_module, inspect.isclass)
-        for class_name, val in all_classes:
-            if class_name.endswith("Commands"):
-                services.add_scoped(val)
-                class_functions = inspect.getmembers(val, inspect.isfunction)
-                for func_name, _ in class_functions:
-                    if func_name.endswith("_command"):
-                        self.__functions_dict[func_name] = class_name
+        for module in self.__commands_modules:
+            all_classes = inspect.getmembers(module, inspect.isclass)
+            for class_name, val in all_classes:
+                if class_name.endswith("Commands"):
+                    services.add_scoped(val)
+                    class_functions = inspect.getmembers(val, inspect.isfunction)
+                    for func_name, _ in class_functions:
+                        if func_name.endswith("_command"):
+                            self.__functions_dict[func_name] = (module, class_name)
 
     def invoke(self, context: Context):
         should_repeat = True
@@ -81,9 +82,10 @@ class CommandsMiddleware(Middleware):
             if command not in self.__functions_dict:
                 break
 
-            controller = getattr(self.__commands_module, self.__functions_dict[command])
+            controller = getattr(self.__functions_dict[command][0], self.__functions_dict[command][1])
             class_instance: CommandsBase = services.get_instance(controller, session.identifier)
             class_instance.session = session
+            class_instance.bot = context.bot
 
             class_instance.message = context.update.message
             class_instance.callback_query = context.update.callback_query
