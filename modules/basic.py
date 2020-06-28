@@ -10,7 +10,7 @@ class BasicCommands(CommandsBase):
         self.__admins = {"ntdesmond", "molberte", "id2"}
 
     def start_command(self, command: str):
-        self.redirect_to_command("help_command")
+        return self.redirect_to_command("help_command")
 
     def help_command(self, command: str):
         if self.session.user.username in self.__admins:

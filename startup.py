@@ -3,7 +3,7 @@ from runtime.context import Context
 from runtime.dependency_injection import services
 from runtime.options import CommandsOptions
 from runtime.middleware import CommandsMiddleware
-from modules import basic, user_request, keyboard
+from modules import basic, user_request, keyboard, admin_module
 
 
 class Startup:
@@ -22,5 +22,5 @@ class Startup:
 
     def configure_commands(self):
         options = CommandsOptions()
-        options.use_commands_modules([basic, user_request])
+        options.use_commands_modules([basic, user_request, admin_module])
         return options
