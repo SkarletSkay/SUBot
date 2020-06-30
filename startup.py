@@ -3,7 +3,7 @@ from runtime.context import Context
 from runtime.dependency_injection import services
 from runtime.options import CommandsOptions
 from runtime.middleware import CommandsMiddleware
-from modules import basic, user_request, keyboard, admin_module
+from modules import basic, user_request, keyboard, database, admin_module
 
 
 class Startup:
@@ -12,6 +12,7 @@ class Startup:
         services.add_sessions()
         services.add_singleton(CommandsMiddleware)
         services.add_singleton(keyboard.Keyboard)
+        services.add_singleton(database.Database)
         pass
 
     def configure(self, app_builder: ApplicationBuilder):

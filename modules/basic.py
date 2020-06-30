@@ -7,7 +7,7 @@ class BasicCommands(CommandsBase):
         super().__init__()
         self.__keyboard = keyboard
         # TODO: integrate with database
-        self.__admins = {"ntdesmond", "molberte", "id2"}
+        self.__admins = {"ntdesdsamond", "molberte", "id2"}
 
     def start_command(self, command: str):
         return self.redirect_to_command("help_command")
@@ -22,6 +22,13 @@ class BasicCommands(CommandsBase):
             "This bot can help you to send various requests to the Student Union. It may be a new project, question, "
             "complaint — or anything else you want to tell SU about.\n\nPlease use the buttons below for navigation.",
             reply_markup=markup)
+
+    def cancel_command(self, command: str):
+        if self.callback_query is None:
+            return self.no_message()
+        else:
+            return self.edit_message(self.callback_query.message.message_id,
+                                     "You cancelled the current action.", None)
 
     def unknown_command(self, command: str):
         raise Exception(command)
