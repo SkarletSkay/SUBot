@@ -1,4 +1,5 @@
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
+from typing import Type
 
 
 class CallbackKeyboard:
@@ -80,3 +81,7 @@ class Keyboard:
     @property
     def empty(self) -> InlineKeyboardMarkup:
         return self.__empty
+
+    @property
+    def factory(self) -> Type[CallbackKeyboard]:
+        return CallbackKeyboard

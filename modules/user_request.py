@@ -26,36 +26,40 @@ class UserRequestCommands(CommandsBase):
                                          self.__keyboard.cancel_only)
         else:
             # write a request body
-            if self.callback_query is None:
+            if self.callback_query is None and not message_text.startswith("/"):
                 category: str = self.session["request_category"]
+                self.session["request_category"] = None
                 if self.__db.save_new_request(self.session.user.id, self.message.date, category, message_text):
                     return self.compound_result((
                         self.edit_message(self.session["new_request_message_id"], None, self.__keyboard.empty),
                         self.send_message(f"We've saved your request.\nCategory: {category}\nStatus: New", None)
                     ))
                 else:
-                    return self.send_message(f"There was an error saving your request :(", None)
+                    return self.compound_result((
+                        self.edit_message(self.session["new_request_message_id"], None, self.__keyboard.empty),
+                        self.send_message(f"There was an error saving your request :(", None)
+                    ))
             else:
                 # redirect if user used another button
-                print(f"redirect to {message_text.split()[0][1:]}, holding = {self.holding_left}")
-                # FIXME: below doesn't work as supposed to
-                # return self.compound_result((
-                #     self.edit_message(self.session["new_request_message_id"], "You have interrupted request creation.", None),
-                #     self.redirect_to_command(f"{message_text.split()[0][1:]}_command")
-                # ))
-                # TODO: add the possibility to continue editing
-                self.bot.edit_message_text("You have interrupted request creation.",
-                                           chat_id=self.session.chat.id,
-                                           message_id=self.session["new_request_message_id"])
+                # TODO: confirmation before sending
                 if message_text.startswith(self.__category_prefix):
-                    return self.edit_message(self.callback_query.message.message_id, "You cannot create two requests in parallel.", None)
+                    self.hold_next()
+                    return self.edit_message(self.callback_query.message.message_id,
+                                             "You cannot create two requests in parallel. "
+                                             "Write the request body for the one awaiting your response, "
+                                             "or hit Cancel and create a new request.", None)
                 else:
+                    self.bot.edit_message_text("You have interrupted request creation.",
+                                               chat_id=self.session.chat.id,
+                                               message_id=self.session["new_request_message_id"],
+                                               reply_markup=self.__keyboard.factory.from_dict(
+                                                   {"Continue": f"/category {self.session['request_category']}"}
+                                               ))
+                    self.session["request_category"] = None
                     return self.redirect_to_command(f"{message_text.split()[0][1:]}_command")
 
     def new_request_command(self, message_text: str):
-        print("new_request_triggered")
         if message_text == "/new_request":
-            self.session["request_category"] = None
             if self.callback_query is None:
                 return self.send_message("Select a category of your request", self.__keyboard.request_categories)
             else:
@@ -69,9 +73,6 @@ class UserRequestCommands(CommandsBase):
             response_text: str = "You have no request being reviewed by Student Union."
         else:
             response_text: str = f"Here is your request:\nCategory: {request['category']}\nStatus: {request['status']}"
-            if request["category"] != self.session["request_category"]:
-                response_text += f"\nNote: The category was changed by the SU member who reviewed for your request\n" \
-                                 f"Original category: {self.session['request_category']}"
             if self.session["show_request_text"]:
                 response_text += f"\n\nText:\n{request['text']}"
         if self.callback_query is None:
