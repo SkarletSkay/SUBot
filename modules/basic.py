@@ -23,13 +23,6 @@ class BasicCommands(CommandsBase):
             "complaint — or anything else you want to tell SU about.\n\nPlease use the buttons below for navigation.",
             reply_markup=markup)
 
-    def cancel_command(self, command: str):
-        if self.callback_query is None:
-            return self.no_message()
-        else:
-            return self.edit_message(self.callback_query.message.message_id,
-                                     "You cancelled the current action.", None)
-
     def unknown_command(self, command: str):
         raise Exception(command)
 

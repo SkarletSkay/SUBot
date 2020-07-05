@@ -10,54 +10,6 @@ class UserRequestCommands(CommandsBase):
         self.__db = database
         self.__category_prefix = "/category "
 
-    def category_command(self, message_text: str):
-        if self.session["request_category"] is None:
-            if self.callback_query is None:
-                return self.no_message()
-            else:
-                # save the category
-                category = message_text[len(self.__category_prefix):]
-                self.session["request_category"] = category
-                self.session["new_request_message_id"] = self.callback_query.message.message_id
-                self.hold_next()  # Take the request text in the next message
-                return self.edit_message(self.callback_query.message.message_id,
-                                         f"Selected category: {category}\n"
-                                         "Alright, now write your request, providing all the information that you consider to be useful here.",
-                                         self.__keyboard.cancel_only)
-        else:
-            # write a request body
-            if self.callback_query is None and not message_text.startswith("/"):
-                category: str = self.session["request_category"]
-                self.session["request_category"] = None
-                if self.__db.save_new_request(self.session.user.id, self.message.date, category, message_text):
-                    return self.compound_result((
-                        self.edit_message(self.session["new_request_message_id"], None, self.__keyboard.empty),
-                        self.send_message(f"We've saved your request.\nCategory: {category}\nStatus: New", None)
-                    ))
-                else:
-                    return self.compound_result((
-                        self.edit_message(self.session["new_request_message_id"], None, self.__keyboard.empty),
-                        self.send_message(f"There was an error saving your request :(", None)
-                    ))
-            else:
-                # redirect if user used another button
-                # TODO: confirmation before sending
-                if message_text.startswith(self.__category_prefix):
-                    self.hold_next()
-                    return self.edit_message(self.callback_query.message.message_id,
-                                             "You cannot create two requests in parallel. "
-                                             "Write the request body for the one awaiting your response, "
-                                             "or hit Cancel and create a new request.", None)
-                else:
-                    self.bot.edit_message_text("You have interrupted request creation.",
-                                               chat_id=self.session.chat.id,
-                                               message_id=self.session["new_request_message_id"],
-                                               reply_markup=self.__keyboard.factory.from_dict(
-                                                   {"Continue": f"/category {self.session['request_category']}"}
-                                               ))
-                    self.session["request_category"] = None
-                    return self.redirect_to_command(f"{message_text.split()[0][1:]}_command")
-
     def new_request_command(self, message_text: str):
         if message_text == "/new_request":
             if self.callback_query is None:
@@ -66,6 +18,87 @@ class UserRequestCommands(CommandsBase):
                 return self.edit_message(self.callback_query.message.message_id,
                                          "Select a category of your request",
                                          self.__keyboard.request_categories)
+
+    def category_command(self, message_text: str):
+        if self.callback_query is None:
+            if self.session["new_request_message_id"] is not None:
+                if message_text.startswith("/"):
+                    # redirect to other actions
+                    if not self.session["new_request_interrupted"]:
+                        # interrupt: must be called only once \/
+                        self.bot.edit_message_text("You have interrupted request creation.",
+                                                   chat_id=self.session.user.id,
+                                                   message_id=self.session["new_request_message_id"],
+                                                   reply_markup=self.__keyboard.factory.from_dict(
+                                                       {"Continue": f"/category {self.session['request_category']}"}
+                                                   ))
+                        self.session["new_request_interrupted"] = True
+                    return self.redirect_to_command(f"{message_text.split()[0][1:]}_command")
+                else:
+                    # write a request body
+                    return self.redirect_to_command("confirm_request_command")
+        else:
+            if message_text.startswith(self.__category_prefix):
+                if self.session["new_request_message_id"] is None or self.callback_query.message.message_id == self.session["new_request_message_id"]:
+                    self.hold_next()  # Take the request text in the next message
+                    # save the category
+                    self.session["new_request_interrupted"] = False
+                    return self.select_category(message_text)
+                else:
+                    self.hold_next()  # Take the request text in the next message
+                    return self.edit_message(self.callback_query.message.message_id,
+                                             "You cannot create two requests in parallel. "
+                                             "Complete the one you have started to edit, "
+                                             "or cancel it and create a new request.", None)
+            else:
+                return self.redirect_to_command(f"{message_text.split()[0][1:]}_command")
+        print(self.session["new_request_message_id"], self.session["new_request_interrupted"])
+        return self.no_message()
+
+    def select_category(self, message_text: str):
+        # helper function
+        category = message_text[len(self.__category_prefix):]
+        self.session["request_category"] = category
+        self.session["new_request_message_id"] = self.callback_query.message.message_id
+        return self.edit_message(self.callback_query.message.message_id,
+                                 f"Selected category: {category}\n"
+                                 "Alright, now write your request, providing all the information that you consider to be useful here.",
+                                 self.__keyboard.change_category)
+
+    def confirm_request_command(self, message_text: str):
+        self.session['request_text'] = message_text
+        return self.compound_result((
+            self.edit_message(self.session["new_request_message_id"], None, self.__keyboard.empty),
+            self.send_message("Please, check the request once again and use the button below to confirm sending."
+                              f"\n\nCategory: {self.session['request_category']}\nText:\n{message_text}",
+                              self.__keyboard.user_request_confirmation)
+        ))
+
+    def send_request_command(self, message_text: str):
+        if self.callback_query is not None:
+            print(self.session["request_category"], self.session["request_text"])
+            save_success = self.__db.save_new_request(self.session.user.id,
+                                                      self.callback_query.message.date,
+                                                      self.session["request_category"],
+                                                      self.session["request_text"])
+            self.session["new_request_message_id"] = None
+            self.session["request_category"] = None
+            self.session["request_text"] = None
+            return self.compound_result((
+                self.edit_message(self.callback_query.message.message_id, None, self.__keyboard.empty),
+                self.send_message("We've saved your request.\nStatus: New" if save_success else "There was an error saving your request :(", None)
+            ))
+        else:
+            return self.no_message()
+
+    def cancel_request_command(self, message_text: str):
+        if self.callback_query is None:
+            return self.no_message()
+        else:
+            self.session["new_request_message_id"] = None
+            self.session["request_category"] = None
+            self.session["request_text"] = None
+            return self.edit_message("You have cancelled the request creation.")
 
     def pending_request_command(self, message_text: str):
         request: dict = self.__db.get_request(self.session.user.id)
@@ -85,7 +118,7 @@ class UserRequestCommands(CommandsBase):
             return self.no_message()
         else:
             self.session["show_request_text"] = not self.session["show_request_text"]
-            return self.redirect_to_command("pending_request_command")
+            return self.redirect_to_command(f"pending_request_command")
 
     def refresh_request_status_command(self, message_text: str):
         if self.callback_query is None:

@@ -49,13 +49,17 @@ class Keyboard:
         self.__request_categories = CallbackKeyboard.from_dict(dict(
             [(category, f"/category {category}") for category in (
                 'Project', 'Learning', 'Another category'
-            )] + [("Cancel", "/cancel")])
+            )] + [("Cancel", "/cancel_request")])
         )
         self.__user_request_actions = CallbackKeyboard.from_dict({
             "Show/Hide request text": "/show_request_text",
             "Refresh": "/refresh_request_status"
         })
-        self.__cancel_only = CallbackKeyboard.from_dict({"Cancel": "/cancel"})
+        self.__user_request_confirmation = CallbackKeyboard.from_dict({
+            "Send!": "/send_request",
+            "Cancel": "/cancel_request"
+        })
+        self.__change_category = CallbackKeyboard.from_dict({"Change category": "/new_request"})
         self.__empty = InlineKeyboardMarkup([[]])
 
     @property
@@ -75,8 +79,12 @@ class Keyboard:
         return self.__user_request_actions
 
     @property
-    def cancel_only(self) -> InlineKeyboardMarkup:
-        return self.__cancel_only
+    def user_request_confirmation(self) -> InlineKeyboardMarkup:
+        return self.__user_request_confirmation
+
+    @property
+    def change_category(self) -> InlineKeyboardMarkup:
+        return self.__change_category
 
     @property
     def empty(self) -> InlineKeyboardMarkup:
