@@ -4,12 +4,12 @@ from typing import Type
 
 class CallbackKeyboard:
     @staticmethod
-    def from_dict(buttons: dict, row_width: int = 3):
+    def from_dict(buttons: dict, row_width: int = 1):
         """
         Create an InlineKeyboardMarkup with given buttons passed as a dict, having a maximum of row_count button per row
 
         :param buttons: Dictionary with keys as button texts and values os their callback data
-        :param row_width: int, maximum buttons per row, defaults to 3
+        :param row_width: int, maximum buttons per row, defaults to 1
         """
         button_objects = [InlineKeyboardButton(text=key, callback_data=buttons[key]) for key in buttons]
         keyboard_rows = []
@@ -40,7 +40,7 @@ class Keyboard:
     def __init__(self):
         self.__commands = CallbackKeyboard.from_dict({
             "Create a request": "/new_request",
-            "See my request": "/pending_request"
+            # "See my request": "/pending_request"
         })
         self.__admin_commands = CallbackKeyboard.from_dict({
             "Create a request": "/new_request",
@@ -57,8 +57,9 @@ class Keyboard:
         })
         self.__user_request_confirmation = CallbackKeyboard.from_dict({
             "Send!": "/send_request",
-            "Cancel": "/cancel_request"
-        })
+            "Cancel": "/cancel_request",
+            "Enable/Disable notifications": "/request_notifications"
+        }, 2)
         self.__change_category = CallbackKeyboard.from_dict({"Change category": "/new_request"})
         self.__empty = InlineKeyboardMarkup([[]])
 

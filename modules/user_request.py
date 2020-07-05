@@ -66,13 +66,21 @@ class UserRequestCommands(CommandsBase):
                                  self.__keyboard.change_category)
 
     def confirm_request_command(self, message_text: str):
-        self.session['request_text'] = message_text
-        return self.compound_result((
-            self.edit_message(self.session["new_request_message_id"], None, self.__keyboard.empty),
-            self.send_message("Please, check the request once again and use the button below to confirm sending."
-                              f"\n\nCategory: {self.session['request_category']}\nText:\n{message_text}",
-                              self.__keyboard.user_request_confirmation)
-        ))
+        if self.callback_query is None:
+            self.session['request_text'] = message_text
+            return self.compound_result((
+                self.edit_message(self.session["new_request_message_id"], None, self.__keyboard.empty),
+                self.send_message("Please, check the request once again and use the button below to confirm sending.\n\n"
+                                  f"Category: {self.session['request_category']}\nText:\n{self.session['request_text']}\n\n"
+                                  "Notifications on updates: " + ("ON" if self.session["request_notifications"] else "OFF"),
+                                  self.__keyboard.user_request_confirmation)
+            ))
+        else:
+            return self.edit_message(self.callback_query.message.message_id,
+                                     "Please, check the request once again and use the button below to confirm sending.\n\n"
+                                     f"Category: {self.session['request_category']}\nText:\n{self.session['request_text']}\n\n"
+                                     "Notifications on updates: " + ("ON" if self.session["request_notifications"] else "OFF"),
+                                     self.__keyboard.user_request_confirmation)
 
     def send_request_command(self, message_text: str):
         if self.callback_query is not None:
@@ -80,10 +88,12 @@ class UserRequestCommands(CommandsBase):
             save_success = self.__db.save_new_request(self.session.user.id,
                                                       self.callback_query.message.date,
                                                       self.session["request_category"],
-                                                      self.session["request_text"])
+                                                      self.session["request_text"],
+                                                      self.session["request_notifications"])
             self.session["new_request_message_id"] = None
             self.session["request_category"] = None
             self.session["request_text"] = None
+            self.session["request_notifications"] = None
             return self.compound_result((
                 self.edit_message(self.callback_query.message.message_id, None, self.__keyboard.empty),
                 self.send_message("We've saved your request.\nStatus: New" if save_success else "There was an error saving your request :(", None)
@@ -98,10 +108,18 @@ class UserRequestCommands(CommandsBase):
             self.session["new_request_message_id"] = None
             self.session["request_category"] = None
             self.session["request_text"] = None
-            return self.edit_message("You have cancelled the request creation.")
+            return self.edit_message(self.callback_query.message.message_id,
+                                     "You have cancelled the request creation.", None)
+
+    def request_notifications_command(self, message_text: str):
+        if self.callback_query is None:
+            return self.no_message()
+        else:
+            self.session["request_notifications"] = not self.session["request_notifications"]
+            return self.redirect_to_command("confirm_request_command")
 
     def pending_request_command(self, message_text: str):
-        request: dict = self.__db.get_request(self.session.user.id)
+        request: dict = self.__db.get_requests(self.session.user.id)[0]
         if request is None:
             response_text: str = "You have no request being reviewed by Student Union."
         else:
