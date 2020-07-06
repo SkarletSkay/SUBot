@@ -1,5 +1,5 @@
 from runtime.commands import CommandsBase
-
+from database import DataBase
 
 class GreetingsCommands(CommandsBase):
 
@@ -21,3 +21,15 @@ class GreetingsCommands(CommandsBase):
 
     def error_handler(self, exception: Exception):
         return self.redirect_to_command("start_command")
+
+    def list_requests_command(self, command: str):
+        if command == "/list_requests":
+            db = DataBase()
+            print("ok")
+            all_requests = db.read_db()
+
+            pretty = 'List of all requests:\n\n'
+            for i in range(len(all_requests)):
+                pretty += str(all_requests[i]) + "\n\n"
+            return self.send_message(pretty, None)
+

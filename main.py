@@ -2,6 +2,7 @@ from startup import Startup
 from runtime.builder import ApplicationBuilder
 from runtime.dependency_injection import ServiceStorage
 from runtime.pipeline import Pipeline
+import database
 
 if __name__ == "__main__":
     startup = Startup()
