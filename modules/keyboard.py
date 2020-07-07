@@ -48,8 +48,9 @@ class Keyboard:
         })
         self.__request_categories = CallbackKeyboard.from_dict(dict(
             [(category, f"/category {category}") for category in (
-                'Project', 'Learning', 'Another category'
-            )] + [("Cancel", "/cancel_request")])
+                'Professors & TAs', 'DoE or Administration', 'Student Affairs', 'Events', 'Student Projects', 'Clubs',
+                'Education process', 'Representatives', 'Student Union'
+            )] + [("Cancel", "/cancel_request")]), 2
         )
         self.__user_request_actions = CallbackKeyboard.from_dict({
             "Show/Hide request text": "/show_request_text",

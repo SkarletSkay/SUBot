@@ -12,7 +12,7 @@ class Startup:
         services.add_sessions()
         services.add_singleton(CommandsMiddleware)
         services.add_singleton(keyboard.Keyboard)
-        services.add_singleton(database.Database)
+        services.add_singleton(database.DataBase)
         pass
 
     def configure(self, app_builder: ApplicationBuilder):

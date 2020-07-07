@@ -1,10 +1,10 @@
 from runtime.commands import CommandsBase
 from modules.keyboard import Keyboard
-from modules.database import Database
+from modules.database import DataBase
 
 
 class UserRequestCommands(CommandsBase):
-    def __init__(self, keyboard: Keyboard, database: Database):
+    def __init__(self, keyboard: Keyboard, database: DataBase):
         super().__init__()
         self.__keyboard = keyboard
         self.__db = database
@@ -52,7 +52,6 @@ class UserRequestCommands(CommandsBase):
                                              "or cancel it and create a new request.", None)
             else:
                 return self.redirect_to_command(f"{message_text.split()[0][1:]}_command")
-        print(self.session["new_request_message_id"], self.session["new_request_interrupted"])
         return self.no_message()
 
     def select_category(self, message_text: str):
@@ -84,16 +83,15 @@ class UserRequestCommands(CommandsBase):
 
     def send_request_command(self, message_text: str):
         if self.callback_query is not None:
-            print(self.session["request_category"], self.session["request_text"])
-            save_success = self.__db.save_new_request(self.session.user.id,
-                                                      self.callback_query.message.date,
-                                                      self.session["request_category"],
-                                                      self.session["request_text"],
-                                                      self.session["request_notifications"])
+            save_success = self.__db.insert_one_request(user_id=self.session.user.id,
+                                                        date=self.callback_query.message.date,
+                                                        category=self.session["request_category"],
+                                                        taken=False,
+                                                        text=self.session["request_text"],
+                                                        notify=self.session["request_notifications"] or False)
             self.session["new_request_message_id"] = None
             self.session["request_category"] = None
             self.session["request_text"] = None
-            self.session["request_notifications"] = None
             return self.compound_result((
                 self.edit_message(self.callback_query.message.message_id, None, self.__keyboard.empty),
                 self.send_message("We've saved your request.\nStatus: New" if save_success else "There was an error saving your request :(", None)
