@@ -1,5 +1,6 @@
 from runtime.commands import CommandsBase
 from modules.keyboard import Keyboard
+from database import DataBase
 
 
 class UserRequestCommands(CommandsBase):
@@ -8,10 +9,10 @@ class UserRequestCommands(CommandsBase):
         self.__keyboard = keyboard
         self.__category_prefix = "/category "
 
-    def save_request(self, user: str, category: str, text: str) -> bool:
-        # TODO: use db instead of saving to file
+    def save_request(self, user: int, alias: str, category: str, text: str) -> bool:
+        DataBase().insert_new_request(user_id=user, alias=alias, category=category, message=text)
         with open("requests.txt", "a") as file:
-            file.write(f"{user}\t{category}\t{text}\n")
+            file.write(f"{user}\t{alias}\t{category}\t{text}\n")
         return True
 
     def new_request_command(self, message_text: str):
@@ -41,8 +42,9 @@ class UserRequestCommands(CommandsBase):
                                          self.__keyboard.cancel_only)
         else:
             category = self.session["new_request_category"]
-            user = self.session.user.username or f"id{self.session.user.id}"
-            if self.save_request(user, category, message_text):
+            user_id = self.session.user.id
+            alias = self.session.user.username
+            if self.save_request(user_id, alias, category, message_text):
                 return self.compound_result((
                     self.edit_message(self.session["new_request_message_id"], None, self.__keyboard.empty),
                     self.send_message(f"We've saved your request.\nCategory: {category}\nStatus: New", None)

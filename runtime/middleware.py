@@ -115,7 +115,11 @@ class CommandsMiddleware(Middleware):
             if isinstance(command_result, RedirectToCommandResult):
                 continue
 
-            command_result.execute(context.bot)
+            if isinstance(command_result, list):
+                for command in command_result:
+                    command.execute(context.bot)
+            else:
+                command_result.execute(context.bot)
             if class_instance.session["__holding__"] != 0:
                 class_instance.session["__command__"] = command
                 self.__session_storage.set_session(class_instance.session.identifier, class_instance.session)
