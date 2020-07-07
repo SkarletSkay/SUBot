@@ -1,87 +1,184 @@
-from typing import Dict, Tuple, Any, List
-from runtime.session import SessionControl
+import uuid
+import abc
+import enum
 import inspect
+import typing
 
 
-class ServiceStorage:
+class IServiceEngine(abc.ABC):
+
+    @abc.abstractmethod
+    def get_or_create_instance(self, obj_type: typing.Type, session_id: int) -> object:
+        pass
+
+
+class IServiceProvider(abc.ABC):
+
+    @abc.abstractmethod
+    def get_instance(self, obj_type: typing.Type, session_id: int = None):
+        pass
+
+
+class LifeSpan(enum.Enum):
+    SINGLETON = 1
+    SCOPED = 2
+    TRANSIENT = 3
+
+
+class ServiceDefinition:
 
     def __init__(self):
-        self.__singleton_storage: Dict[type, object] = dict()
-        self.__scoped_storage: Dict[Tuple[int, type], object] = dict()
-        self.__transient_storage: Dict[type, object] = dict()
-        self.__singleton_list: List[type] = list()
-        self.__scoped_list: List[type] = list()
-        self.__transient_list: List[type] = list()
+        self.__source_type: type = object
+        self.__implementation_type: typing.Optional[type] = object
+        self.__lifespan: LifeSpan = LifeSpan.TRANSIENT
+        self.__uuid = uuid.uuid4()
 
-    def add_sessions(self):
-        self.add_singleton(SessionControl)
+    @property
+    def source_type(self) -> type:
+        return self.__source_type
 
-    def add_transient(self, obj: type):
-        if obj not in self.__scoped_list and obj not in self.__singleton_list and obj not in self.__transient_list:
-            self.__transient_list.append(obj)
+    @source_type.setter
+    def source_type(self, value: type):
+        self.__source_type = value
 
-    def add_scoped(self, obj: type):
-        if obj not in self.__scoped_list and obj not in self.__singleton_list and obj not in self.__transient_list:
-            self.__scoped_list.append(obj)
+    @property
+    def implementation_type(self) -> typing.Optional[type]:
+        return self.__implementation_type
 
-    def add_singleton(self, obj: type):
-        if obj not in self.__scoped_list and obj not in self.__singleton_list and obj not in self.__transient_list:
-            self.__singleton_list.append(obj)
+    @implementation_type.setter
+    def implementation_type(self, value: typing.Optional[type]):
+        self.__implementation_type = value
 
-    def __get_singleton(self, key: type):
-        if key not in self.__singleton_storage:
+    @property
+    def lifespan(self) -> LifeSpan:
+        return self.__lifespan
+
+    @lifespan.setter
+    def lifespan(self, value: LifeSpan):
+        self.__lifespan = value
+
+    @property
+    def uuid(self) -> uuid.UUID:
+        return self.__uuid
+
+
+class ServiceCollection:
+    __t = typing.TypeVar("__t")
+
+    def __init__(self):
+        self.__services: typing.List[ServiceDefinition] = list()
+
+    def add_singleton(self, obj_type: typing.Type[__t], imp_type: typing.Optional[typing.Type[__t]] = None):
+        self.__add_service(obj_type, imp_type, LifeSpan.SINGLETON)
+
+    def add_scoped(self, obj_type: typing.Type[__t], imp_type: typing.Optional[typing.Type[__t]] = None):
+        self.__add_service(obj_type, imp_type, LifeSpan.SCOPED)
+
+    def add_transient(self, obj_type: typing.Type[__t], imp_type: typing.Optional[typing.Type[__t]] = None):
+        self.__add_service(obj_type, imp_type, LifeSpan.TRANSIENT)
+
+    def __add_service(self, obj_type: typing.Type[__t], imp_type: typing.Optional[typing.Type[__t]],
+                      lifespan: LifeSpan):
+        if self.registered(obj_type):
+            return
+
+        service = ServiceDefinition()
+        service.source_type = obj_type
+        service.implementation_type = imp_type
+        service.lifespan = lifespan
+        self.__services.append(service)
+
+    def remove(self, base_type: typing.Type[__t]):
+        for service in self.__services:
+            if service.source_type == base_type:
+                self.__services.remove(service)
+                break
+
+    def registered(self, base_type: typing.Type[__t]) -> bool:
+        for service in self.__services:
+            if service.source_type == base_type:
+                return True
+        return False
+
+    def get_service(self, base_type) -> typing.Optional[ServiceDefinition]:
+        for service in self.__services:
+            if service.source_type == base_type:
+                return service
+        return None
+
+    @property
+    def services(self) -> typing.Tuple[ServiceDefinition, ...]:
+        return tuple(self.__services)
+
+    def add_commands(self, options):
+        commands_modules = options()["__modules__"]
+
+        for module in commands_modules:
+            all_classes = inspect.getmembers(module, inspect.isclass)
+            for class_name, val in all_classes:
+                if class_name.endswith("Commands"):
+                    self.add_scoped(val)
+
+
+class ServiceEngine(IServiceEngine):
+
+    def __init__(self, services: typing.Tuple[ServiceDefinition]):
+        self.__services = services
+        self.__realized: typing.Dict[typing.Tuple[typing.Type, typing.Optional[int]], object] = dict()
+
+    def get_or_create_instance(self, obj_type: typing.Type, session_id: typing.Optional[int] = None) -> object:
+        return self.__get_or_create_instance(obj_type, session_id, list())
+
+    def __get_or_create_instance(self, obj_type: typing.Type, session_id: typing.Optional[int] = None,
+                                 created: typing.List[typing.Type] = None):
+        definition: typing.Optional[ServiceDefinition] = None
+        for service in self.__services:
+            if service.implementation_type == obj_type or service.source_type == obj_type:
+                definition = service
+                break
+        if definition is None:
             return None
-        return self.__singleton_storage[key]
 
-    def __set_singleton(self, key: type, value: Any):
-        self.__singleton_storage[key] = value
+        target_type: typing.Type = definition.source_type
+        if definition.implementation_type is not None:
+            target_type = definition.implementation_type
+        if target_type in created:
+            raise RuntimeError(f"Recursive injection of type {target_type} is not allowed")
 
-    def __get_scoped(self, key: type, session_id: int):
-        if (session_id, key) not in self.__scoped_storage:
-            return None
-        return self.__scoped_storage[(session_id, key)]
+        if definition.lifespan == LifeSpan.SINGLETON and (definition.uuid, 0) in self.__realized:
+            return self.__realized[(target_type, 0)]
 
-    def __set_scoped(self, key: type, session_id: int, value: Any):
-        self.__scoped_storage[(session_id, key)] = value
+        if definition.lifespan == LifeSpan.SCOPED and (definition.uuid, session_id) in self.__realized:
+            return self.__realized[(target_type, session_id)]
 
-    def get_instance(self, obj_type: type, session_id: int):
-        return self.__get_instance(obj_type, session_id, list())
-
-    def __get_instance(self, obj_type: type, session_id: int, created_instances: List[type]):
-
-        if obj_type not in self.__transient_list and obj_type not in self.__scoped_list and obj_type not in self.__singleton_list:
-            raise RuntimeError("Cannot find dependency object {0}. You might want to register the object in configure_services method".format(obj_type))
-
-        if obj_type in created_instances:
-            raise RuntimeError("Recursive injection of object {0} is not allowed".format(obj_type))
-
-        created_instances.append(obj_type)
-        init_signature = inspect.signature(obj_type.__init__)
+        created.append(target_type)
+        ctor_signature = inspect.signature(target_type.__init__)
         param_dict = dict()
-        for param_name, param_data in init_signature.parameters.items():
-            param_type = param_data.annotation
-            if param_type not in self.__singleton_list and param_type not in self.__transient_list and param_type not in self.__scoped_list:
+        for param_name, param_data in ctor_signature.parameters.items():
+            if param_name == 'self' or param_data.kind == inspect.Parameter.VAR_POSITIONAL or param_data.kind == inspect.Parameter.VAR_KEYWORD:
                 continue
+            param_type = param_data.annotation
+            param_instance = self.__get_or_create_instance(param_type, session_id, created)
 
-            param_dict[param_name] = self.__get_instance(param_type, session_id, created_instances)
+            param_dict[param_name] = param_instance
+        obj_instance = target_type(**param_dict)
 
-        if obj_type in self.__transient_list:
-            return obj_type(**param_dict)
-
-        if obj_type in self.__singleton_list:
-            found_singleton = self.__get_singleton(obj_type)
-            if found_singleton is None:
-                object_inst = obj_type(**param_dict)
-                self.__set_singleton(obj_type, object_inst)
-                return object_inst
-            return found_singleton
-
-        found_scoped = self.__get_scoped(obj_type, session_id)
-        if found_scoped is None:
-            object_inst = obj_type(**param_dict)
-            self.__set_scoped(obj_type, session_id, object_inst)
-            return object_inst
-        return found_scoped
+        if definition.lifespan == LifeSpan.SCOPED:
+            self.__realized[(target_type, session_id)] = obj_instance
+        elif definition.lifespan == LifeSpan.SINGLETON:
+            self.__realized[(target_type, 0)] = obj_instance
+        return obj_instance
 
 
-services: ServiceStorage = ServiceStorage()
+class ServiceProvider(IServiceProvider):
+
+    def get_instance(self, obj_type: typing.Type, session_id: int = None) -> typing.Optional[object]:
+        if self.__engine is None:
+            return None
+        return self.__engine.get_or_create_instance(obj_type, session_id)
+
+    def __init__(self):
+        self.__engine: typing.Optional[IServiceEngine] = None
+
+    def populate(self, services: typing.Tuple[ServiceDefinition]):
+        self.__engine = ServiceEngine(services)
