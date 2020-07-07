@@ -60,9 +60,10 @@ class CommandsBase:
     def hold_next(self, duration: int = 1):
         self.session["__holding__"] = duration
 
-    def send_message(self, text: str, reply_markup) -> CommandResult:
-        result = MessageResult(text, self.session.chat.id, reply_markup)
-        return result
+    def send_message(self, text: str, reply_markup, chat_id=None, parse_mode=None) -> CommandResult:
+        if chat_id:
+            return MessageResult(text, chat_id, reply_markup, parse_mode)
+        return MessageResult(text, self.session.chat.id, reply_markup, parse_mode)
 
     def no_message(self) -> CommandResult:
         return EmptyResult()
@@ -76,8 +77,8 @@ class CommandsBase:
         result = MessageListResult(self.session.chat.id, messages_list)
         return result
 
-    def edit_message(self, message_id: int, new_text: str, new_markup: ReplyMarkup):
-        result = EditMessageResult(self.session.chat.id, message_id, new_text, new_markup)
+    def edit_message(self, message_id: int, new_text: str, new_markup: ReplyMarkup, parse_mode=None):
+        result = EditMessageResult(self.session.chat.id, message_id, new_text, new_markup, parse_mode)
         return result
 
     def reply_to_message(self, message_id: int, text: str, reply_markup):
@@ -99,13 +100,14 @@ class CompoundResult(CommandResult):
 
 class MessageResult(CommandResult):
 
-    def __init__(self, message: str, chat_id: int, reply_markup):
+    def __init__(self, message: str, chat_id: int, reply_markup, parse_mode=None):
         self.__message = message
         self.__chat_id = chat_id
         self.__markup = reply_markup
+        self.__parse_mode = parse_mode
 
     def execute(self, bot: Bot):
-        bot.send_message(self.__chat_id, self.__message, reply_markup=self.__markup)
+        bot.send_message(self.__chat_id, self.__message, reply_markup=self.__markup, parse_mode=self.__parse_mode)
 
 
 class EmptyResult(CommandResult):
@@ -142,15 +144,17 @@ class MessageListResult(CommandResult):
 
 
 class EditMessageResult(CommandResult):
-    def __init__(self, chat_id: int, message_id: int, new_text: str, new_markup: ReplyMarkup):
+    def __init__(self, chat_id: int, message_id: int, new_text: str, new_markup: ReplyMarkup, parse_mode=None):
         self.__chat_id = chat_id
         self.__message_id = message_id
         self.__new_text = new_text
         self.__new_markup = new_markup
+        self.__parse_mode = parse_mode
 
     def execute(self, bot: Bot):
         if self.__new_text is not None:
-            bot.edit_message_text(self.__new_text, chat_id=self.__chat_id, message_id=self.__message_id)
+            bot.edit_message_text(self.__new_text, chat_id=self.__chat_id, message_id=self.__message_id,
+                                  parse_mode=self.__parse_mode)
         if self.__new_markup is not None:
             bot.edit_message_reply_markup(self.__chat_id, self.__message_id, reply_markup=self.__new_markup)
 
@@ -162,4 +166,5 @@ class EditMessageMarkupResult(CommandResult):
         self.__message_id = message_id
 
     def execute(self, bot: Bot):
-        bot.edit_message_reply_markup(chat_id=self.__chat_id, message_id=self.__message_id, reply_markup=self.__new_markup)
+        bot.edit_message_reply_markup(chat_id=self.__chat_id, message_id=self.__message_id,
+                                      reply_markup=self.__new_markup)

@@ -1,5 +1,4 @@
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
-from typing import Type
 
 
 class CallbackKeyboard:
@@ -14,7 +13,7 @@ class CallbackKeyboard:
         button_objects = [InlineKeyboardButton(text=key, callback_data=buttons[key]) for key in buttons]
         keyboard_rows = []
         for i in range(0, len(button_objects), row_width):
-            keyboard_rows.append(button_objects[i:i+row_width])
+            keyboard_rows.append(button_objects[i:i + row_width])
         return InlineKeyboardMarkup(keyboard_rows)
 
     @staticmethod
@@ -28,7 +27,7 @@ class CallbackKeyboard:
         button_objects = [InlineKeyboardButton(text=key, callback_data=key) for key in buttons]
         keyboard_rows = []
         for i in range(0, len(button_objects), row_width):
-            keyboard_rows.append(button_objects[i:i+row_width])
+            keyboard_rows.append(button_objects[i:i + row_width])
         return InlineKeyboardMarkup(keyboard_rows)
 
 
@@ -37,10 +36,10 @@ class Keyboard:
     A class with all the InlineKeyboardMarkup objects used by bot.
     Defined in init, objects can be accessed using the class properties
     """
+
     def __init__(self):
         self.__commands = CallbackKeyboard.from_dict({
-            "Create a request": "/new_request",
-            # "See my request": "/pending_request"
+            "Create a request": "/new_request"
         })
         self.__admin_commands = CallbackKeyboard.from_dict({
             "Create a request": "/new_request",
@@ -92,6 +91,19 @@ class Keyboard:
     def empty(self) -> InlineKeyboardMarkup:
         return self.__empty
 
-    @property
-    def factory(self) -> Type[CallbackKeyboard]:
-        return CallbackKeyboard
+    @staticmethod
+    def new_request_actions(request_id) -> InlineKeyboardMarkup:
+        return CallbackKeyboard.from_dict(dict(
+            [(action, f"/new_request_action {request_id}:{action}") for action in (
+                'Take', 'Respond', 'Close',
+            )] + [("Cancel", "Cancel")])
+        )
+
+    @staticmethod
+    def get_user_messages_paginated(alias, offset, l_available=True, r_available=True) -> InlineKeyboardMarkup:
+        arrows = []
+        arrows.append("<") if l_available else None
+        arrows.append(">") if r_available else None
+        return CallbackKeyboard.from_dict(dict(
+            [(action, f"/get_user_messages {alias}:{action}:{offset}") for action in arrows] + [("Cancel", "Cancel")])
+        )
