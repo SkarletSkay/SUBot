@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<resource>
+    <model class="modules.commands.Request" handler="modules.commands.Handler" name="new_request" entry_command="new_request" confirm_send="true" confirm_cancel="true">
+        <property name="title" text="@strings/title" type="str" hint="@strings/enter_title_hint"/>
+        <property name="description" text="@strings/description" type="str" hint="@strings/enter_description_hint"/>
+        <property name="category" text="@strings/category" type="@strings/categories" hint="@strings/choose_category"/>
+        <property name="notify" text="Notification" type="bool" hint="@strings/is_notify" optional="true"/>
+    </model>
+</resource>
