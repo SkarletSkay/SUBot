@@ -34,7 +34,8 @@ class CallbackKeyboard:
 class Keyboard:
     """
     A class with all the InlineKeyboardMarkup objects used by bot.
-    Defined in init, objects can be accessed using the class properties
+    Defined in init, static keyboards can be accessed using the class properties
+    Dynamically generated (depending on parameters) keyboards are the static methods (ironically enough)
     """
 
     def __init__(self):
@@ -43,7 +44,8 @@ class Keyboard:
         })
         self.__admin_commands = CallbackKeyboard.from_dict({
             "Create a request": "/new_request",
-            "See user requests": "/get_user_messages"
+            "See requests from a specific user": "/get_user_messages",
+            "See new requests": "/check_new_requests"
         })
         self.__request_categories = CallbackKeyboard.from_dict(dict(
             [(category, f"/category {category}") for category in (
@@ -92,7 +94,11 @@ class Keyboard:
         return self.__empty
 
     @staticmethod
-    def new_request_actions(request_id) -> InlineKeyboardMarkup:
+    def continue_request_creation(category: str):
+        return CallbackKeyboard.from_dict({"Continue": f"/category {category}"})
+
+    @staticmethod
+    def new_request_actions(request_id: str) -> InlineKeyboardMarkup:
         return CallbackKeyboard.from_dict(dict(
             [(action, f"/new_request_action {request_id}:{action}") for action in (
                 'Take', 'Respond', 'Close',
@@ -100,10 +106,12 @@ class Keyboard:
         )
 
     @staticmethod
-    def get_user_messages_paginated(alias, offset, l_available=True, r_available=True) -> InlineKeyboardMarkup:
+    def get_user_messages_paginated(alias: str, offset: int, l_available=True, r_available=True) -> InlineKeyboardMarkup:
         arrows = []
-        arrows.append("<") if l_available else None
-        arrows.append(">") if r_available else None
+        if l_available:
+            arrows.append("<")
+        if r_available:
+            arrows.append(">")
         return CallbackKeyboard.from_dict(dict(
             [(action, f"/get_user_messages {alias}:{action}:{offset}") for action in arrows] + [("Cancel", "Cancel")])
         )

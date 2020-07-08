@@ -29,8 +29,8 @@ class UserRequestCommands(CommandsBase):
                         self.bot.edit_message_text("You have interrupted request creation.",
                                                    chat_id=self.session.user.id,
                                                    message_id=self.session["new_request_message_id"],
-                                                   reply_markup=self.__keyboard.factory.from_dict(
-                                                       {"Continue": f"/category {self.session['request_category']}"}
+                                                   reply_markup=self.__keyboard.continue_request_creation(
+                                                       self.session["request_category"]
                                                    ))
                         self.session["new_request_interrupted"] = True
                     return self.redirect_to_command(f"{message_text.split()[0][1:]}_command")
@@ -83,10 +83,9 @@ class UserRequestCommands(CommandsBase):
 
     def send_request_command(self, message_text: str):
         if self.callback_query is not None:
-            save_success = self.__db.insert_one_request(user_id=self.session.user.id,
-                                                        date=self.callback_query.message.date,
+            save_success = self.__db.insert_new_request(user_id=self.session.user.id,
+                                                        alias=self.session.user.username,
                                                         category=self.session["request_category"],
-                                                        taken=False,
                                                         text=self.session["request_text"],
                                                         notify=self.session["request_notifications"] or False)
             self.session["new_request_message_id"] = None
@@ -117,7 +116,7 @@ class UserRequestCommands(CommandsBase):
             return self.redirect_to_command("confirm_request_command")
 
     def pending_request_command(self, message_text: str):
-        request: dict = self.__db.get_requests(self.session.user.id)[0]
+        request: dict = self.__db.__get_requests(self.session.user.id)[0]
         if request is None:
             response_text: str = "You have no request being reviewed by Student Union."
         else:

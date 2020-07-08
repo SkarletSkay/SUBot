@@ -7,7 +7,7 @@ class BasicCommands(CommandsBase):
         super().__init__()
         self.__keyboard = keyboard
         # TODO: integrate with database
-        self.__admins = {"ntdesdsamond", "molberte", "id2"}
+        self.__admins = {"ntdesmond", "molberte", "id2"}
 
     def start_command(self, command: str):
         return self.redirect_to_command("help_command")
