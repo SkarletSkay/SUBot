@@ -37,7 +37,7 @@ class DataBase:
         db = self.client.test
         db.chats.update_one({"_id": ObjectId(request_id)}, update_body, upsert=True)
 
-    def get_requests_by_alias(self, alias, limit=10, offset=0):
+    def get_requests_by_alias(self, alias, limit=3, offset=0):
         db = self.client.test
         user_msgs = db.chats.find({"alias": alias}).sort([("timestamp", DESCENDING)])
         return list(user_msgs.skip(offset).limit(limit)), user_msgs.count()

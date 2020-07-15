@@ -7,7 +7,7 @@ from database import DataBase
 from modules.keyboard import Keyboard
 from runtime.commands import CommandsBase
 
-admins = {"molberte", "ntdesmond", "lexa_small", "alias25664", "EgorBak"}
+admins = {"molberte", "ntdesmond", "lexa_small", "alias25664"}
 
 
 def admin_only(func):
@@ -23,7 +23,7 @@ def admin_only(func):
 
 
 class AdminCommands(CommandsBase):
-    pagination_step = 10
+    pagination_step = 3
 
     def __init__(self, keyboard: Keyboard):
         super().__init__()
@@ -101,7 +101,7 @@ class AdminCommands(CommandsBase):
                             self.message.text,
                             0,
                             l_available=False,
-                            r_available=count > 10,
+                            r_available=count > self.pagination_step,
                         ),
                         parse_mode=ParseMode.MARKDOWN,
                     )

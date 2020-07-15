@@ -43,7 +43,7 @@ class Keyboard:
         })
         self.__admin_commands = CallbackKeyboard.from_dict({
             "Create a request": "/new_request",
-            "See user requests": "/get_user_messages"
+            "See new requests": "/check_new_requests"
         })
         self.__request_categories = CallbackKeyboard.from_dict(dict(
             [(category, f"/category {category}") for category in (
