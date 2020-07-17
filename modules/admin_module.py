@@ -49,12 +49,19 @@ class AdminCommands(CommandsBase):
     @admin_only
     def get_user_messages_command(self, message_text: str):
         if self.callback_query is not None:
-            if message_text == "Cancel":
+            if message_text == "/get_user_messages cancel":
                 self.hold_next(0)  # don't hold anymore
                 return self.edit_message(
                     self.callback_query.message.message_id,
                     "You cancelled user messages listing",
                     None,
+                )
+            # quick fix so that keyboard doesn't crash
+            elif message_text == "/get_user_messages":
+                self.hold_next(1)
+                return self.send_message(
+                    "Send the alias of user you want to get messages from",
+                    reply_markup=None,
                 )
             elif message_text.startswith("/get_user_messages"):
                 alias, action, offset = message_text[

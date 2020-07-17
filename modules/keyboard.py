@@ -113,5 +113,5 @@ class Keyboard:
         if r_available:
             arrows.append(">")
         return CallbackKeyboard.from_dict(dict(
-            [(action, f"/get_user_messages {alias}:{action}:{offset}") for action in arrows] + [("Cancel", "Cancel")])
+            [(action, f"/get_user_messages {alias}:{action}:{offset}") for action in arrows] + [("Cancel", "/get_user_messages cancel")])
         )
