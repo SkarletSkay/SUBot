@@ -6,9 +6,8 @@ from runtime.middleware import CommandsMiddleware, CommandsModelMiddleware, Erro
 from runtime.options import CommandsOptions
 import runtime.dependency_injection
 import runtime.session
-import commands
+import modules.commands
 from runtime.resources import XmlResourceParser, IResourceParser, IResourceProvider, Resources
-
 
 
 class Startup:
@@ -31,12 +30,11 @@ class Startup:
         app_builder.use_bot_token("1114791345:AAFY4DwdCJEfqj5uRmcchjtcqgEo93Lf77I")
         app_builder.timeout = 3000
         app_builder.updates_limit = 3
-        app_builder.use_middleware(ErrorHandlerMiddleware)
         app_builder.use_middleware(LoggingMiddleware)
         app_builder.use_middleware(CommandsModelMiddleware)
         app_builder.use_commands(self.configure_commands)
 
     def configure_commands(self):
         options = CommandsOptions()
-        options.use_commands_modules([commands])
+        options.use_commands_modules([modules.commands])
         return options

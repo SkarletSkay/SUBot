@@ -1,6 +1,7 @@
 import typing
 
-from runtime.commands import ModelCommandBase, CommandResult
+from resources.designer import Resources
+from runtime.commands import ModelCommandBase, CommandResult, CommandsBase
 
 
 class Request:
@@ -22,3 +23,9 @@ class Handler(ModelCommandBase):
 
     def on_enter(self) -> CommandResult:
         return self.send_message(text="YOU STARTED NEW REQUEST")
+
+
+class MyCommands(CommandsBase):
+
+    def start_command(self, args):
+        return self.send_message(resource=Resources.Strings.CONFIRM_SENDING)
