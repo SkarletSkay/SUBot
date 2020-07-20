@@ -77,7 +77,7 @@ class CommandsMiddleware(Middleware):
         controller = getattr(self.__functions_dict[command][0], self.__functions_dict[command][1])
         class_instance = context.services.get_instance(controller, context.user.id)
         class_instance.session = context.session
-        class_instance.resources = context.services.get_instance(IResourceProvider)
+        class_instance.resources = context.resources
         class_instance.services = context.services
         class_instance.user = context.user
         class_instance.bot_request = context.bot_request
@@ -85,7 +85,7 @@ class CommandsMiddleware(Middleware):
 
         command_callable = getattr(class_instance, command)
         try:
-            command_result = command_callable(*context.bot_request.args)
+            command_result = command_callable(context.bot_request.args)
         except Exception as exception:
             self.__logger.error(str(exception) + " " + str(exception))
             if self.__error_handler is None:
