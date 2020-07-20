@@ -1,24 +1,40 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <resource>
+    <string name="help_message">This bot is designed to facilitate connection between you and the Student Union (SU). This bot can help you to send various requests to the Student Union. It may be a new project, question, complaint — or anything else you want to tell SU about.\n\nPlease use the buttons below for navigation.</string>
+    <string name="unknown_command">Unknown command. Type "/help" for help.</string>
     <string name="yes">yes</string>
     <string name="no">no</string>
-    <string name="enter_title_hint">Enter title</string>
-    <string name="enter_description_hint">Enter description</string>
+    <string name="enter_request_text">Alright, now write your request, providing all the information that you consider to be useful here.</string>
+    <string name="choose_request_category">Choose category:</string>
     <string name="back">Back</string>
-    <string name="choose_category">Choose category:</string>
     <string name="edit">Edit</string>
     <string name="confirm_sending">Are you sure you want to send request?</string>
     <string name="confirm_cancel">Are you sure you want to cancel creating of request?</string>
+    <string name="request_cancel">You have canceled the request creation.</string>
+    <string name="request_save_success">Your request was successfully sent. Soon you will receive the response from SU.</string>
+    <string name="request_save_fail">Unfortunately, there was a problem saving your request.</string>
     <string name="send">Send</string>
-    <string name="title">Title</string>
-    <string name="description">Description</string>
+    <string name="request_text">Text</string>
     <string name="category">Category</string>
     <string name="cancel">Cancel</string>
-    <string name="invalid_value">Invalid value of property. Try writing another value</string>
-    <string name="is_notify">Should we send a message when status is changed?</string>
+    <string name="notifications">Notifications</string>
+    <string name="invalid_value">Invalid value of property. Try writing another value.</string>
+    <string name="is_notify">Should we send a message when the request status is changed?</string>
+    <string name="review_title">Your request:</string>
     <string-array name="categories">
-        <item>Category 1</item>
-        <item>Category 2</item>
-        <item>Category 3</item>
+        <item>Professors &amp; TAs</item>
+        <item>DoE or Administration</item>
+        <item>Student Affairs</item>
+        <item>Events</item>
+        <item>Student Projects</item>
+        <item>Clubs</item>
+        <item>Education process</item>
+        <item>Representatives</item>
+        <item>Student Union</item>
     </string-array>
+    <!-- Keyboard entries -->
+    <string name="new_request">Create a request</string>
+    <string name="get_user_messages">See requests from a specific user</string>
+    <string name="check_new_requests">See new requests</string>
+    <!-- /Keyboard entries -->
 </resource>

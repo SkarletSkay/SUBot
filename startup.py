@@ -1,4 +1,3 @@
-from modules.commands import Handler
 from runtime.builder import ApplicationBuilder
 from runtime.commands import ModelCommandBase
 from runtime.logging import Logger
@@ -6,9 +5,8 @@ from runtime.middleware import CommandsMiddleware, CommandsModelMiddleware, Erro
 from runtime.options import CommandsOptions
 import runtime.dependency_injection
 import runtime.session
-import commands
 from runtime.resources import XmlResourceParser, IResourceParser, IResourceProvider, Resources
-
+from modules import basic, database, keyboard, user_request, admin_module
 
 
 class Startup:
@@ -22,13 +20,15 @@ class Startup:
         services.add_singleton(CommandsModelMiddleware)
         services.add_singleton(IResourceProvider, Resources)
         services.add_scoped(ModelCommandBase)
-        services.add_scoped(Handler)
+        services.add_scoped(user_request.Handler)
         services.add_singleton(Logger)
         services.add_singleton(ErrorHandlerMiddleware)
         services.add_singleton(LoggingMiddleware)
+        services.add_singleton(database.DataBase)
+        services.add_scoped(keyboard.Keyboard)
 
     def configure(self, app_builder: ApplicationBuilder):
-        app_builder.use_bot_token("1114791345:AAFY4DwdCJEfqj5uRmcchjtcqgEo93Lf77I")
+        app_builder.use_bot_token("1227930360:AAH6CPN_L5S7blA_Tt0pn6OrffKcQen51jo")
         app_builder.timeout = 3000
         app_builder.updates_limit = 3
         app_builder.use_middleware(ErrorHandlerMiddleware)
@@ -38,5 +38,5 @@ class Startup:
 
     def configure_commands(self):
         options = CommandsOptions()
-        options.use_commands_modules([commands])
+        options.use_commands_modules([admin_module, basic])
         return options

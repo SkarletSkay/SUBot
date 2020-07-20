@@ -39,6 +39,7 @@ class Keyboard:
     """
 
     def __init__(self):
+        # TODO: use Resources
         self.__commands = CallbackKeyboard.from_dict({
             "Create a request": "/new_request"
         })
@@ -113,5 +114,5 @@ class Keyboard:
         if r_available:
             arrows.append(">")
         return CallbackKeyboard.from_dict(dict(
-            [(action, f"/get_user_messages {alias}:{action}:{offset}") for action in arrows] + [("Cancel", "Cancel")])
+            [(action, f"/get_user_messages {alias}:{action}:{offset}") for action in arrows] + [("Cancel", "/get_user_messages cancel")])
         )

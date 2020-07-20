@@ -82,7 +82,6 @@ class CommandsMiddleware(Middleware):
         class_instance.user = context.user
         class_instance.bot_request = context.bot_request
         class_instance.bot_response = context.bot_response
-
         command_callable = getattr(class_instance, command)
         try:
             command_result = command_callable(*context.bot_request.args)

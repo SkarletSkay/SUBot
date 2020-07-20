@@ -1,24 +1,40 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <resource>
+    <string name="help_message">Этот бот поможет Вам связаться с Студ. Объединением (Student Union). Вы можете отправлять различные запросы в SU: это может быть новый проект, вопрос, жалоба, либо что-то еще, что Вы хотите рассказать членам SU.\n\nИспользуйте кнопки ниже для навигации.</string>
+    <string name="unknown_command">Неизвестная команда. Напишите "/help", чтобы посмотреть список доступных.</string>
     <string name="yes">Да</string>
     <string name="no">Нет</string>
-    <string name="enter_title_hint">Введите заголовок запроса</string>
-    <string name="enter_description_hint">Введите описание запроса</string>
-    <string name="choose_category">Выберите категорию:</string>
+    <string name="enter_request_text">Введите текст запроса</string>
+    <string name="choose_request_category">Выберите категорию:</string>
     <string name="back">Назад</string>
     <string name="edit">Редактировать</string>
     <string name="confirm_sending">Отправить запрос?</string>
     <string name="confirm_cancel">Вы уверены, что хотите отменить?</string>
+    <string name="request_cancel">Вы отменили создание запроса.</string>
+    <string name="request_save_success">Запрос успешно отправлен. Ожидайте ответ от SU.</string>
+    <string name="request_save_fail">К сожалению, не полуучилось сохранить ваш запрос.</string>
     <string name="send">Отправить</string>
     <string name="cancel">Отмена</string>
-    <string name="title">Заголовок</string>
-    <string name="description">Описание</string>
+    <string name="request_text">Текст</string>
     <string name="category">Категория</string>
-    <string name="invalid_value">Неверное значение. Напишите другое</string>
-    <string name="is_notify">Уведомить вас при изменении статуса?</string>
+    <string name="notifications">Уведомления</string>
+    <string name="invalid_value">Неверное значение. Попробуйте ввести другое.</string>
+    <string name="is_notify">Уведомить вас при изменении статуса запроса?</string>
+    <string name="review_title">Ваш запрос:</string>
     <string-array name="categories">
-        <item>Категория 1</item>
-        <item>Категория 2</item>
-        <item>Категория 3</item>
+        <item>Преподаватели</item>
+        <item>Уч. отдел и администрация</item>
+        <item>Отдел развития студентов (319)</item>
+        <item>События</item>
+        <item>Студенческие проекты</item>
+        <item>Клубы</item>
+        <item>Обучение</item>
+        <item>Старосты</item>
+        <item>Студ. объединение (Student Union)</item>
     </string-array>
+    <!-- Keyboard entries -->
+    <string name="new_request">Новый запрос</string>
+    <string name="get_user_messages">Посмотреть запросы по алиасу</string>
+    <string name="check_new_requests">Посмотреть новые запросы</string>
+    <!-- /Keyboard entries -->
 </resource>

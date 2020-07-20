@@ -23,7 +23,7 @@ def admin_only(func):
 
 
 class AdminCommands(CommandsBase):
-    pagination_step = 10
+    pagination_step = 3
 
     def __init__(self, keyboard: Keyboard, database: DataBase):
         super().__init__()
@@ -32,7 +32,7 @@ class AdminCommands(CommandsBase):
         self.__category_prefix = "/new_request_action "
 
     def is_admin(self) -> bool:
-        return self.session.user.username in admins
+        return self.user.username in admins
 
     @staticmethod
     def build_request_body(db_item):
@@ -47,17 +47,24 @@ class AdminCommands(CommandsBase):
         return msg + f"*Message*:\n```\n{db_item.get('text')}\n```"
 
     @admin_only
-    def get_user_messages_command(self, message_text: str):
-        if self.callback_query is not None:
-            if message_text == "Cancel":
+    def get_user_messages_command(self, *args):
+        if self.bot_request.is_callback:
+            if self.bot_request.message_text == "/get_user_messages cancel":
                 self.hold_next(0)  # don't hold anymore
                 return self.edit_message(
-                    self.callback_query.message.message_id,
+                    self.bot_request.message_id,
                     "You cancelled user messages listing",
                     None,
                 )
-            elif message_text.startswith("/get_user_messages"):
-                alias, action, offset = message_text[
+            # quick fix so that keyboard doesn't crash
+            elif self.bot_request.message_text == "/get_user_messages":
+                self.hold_next(1)
+                return self.send_message(
+                    "Send the alias of user you want to get messages from",
+                    reply_markup=None,
+                )
+            elif self.bot_request.message_text.startswith("/get_user_messages"):
+                alias, action, offset = self.bot_request.message_text[
                     len("/get_user_messages "):
                 ].split(":")
                 offset = int(offset)
@@ -73,9 +80,9 @@ class AdminCommands(CommandsBase):
                     or "None"
                 )
                 return self.edit_message(
-                    self.callback_query.message.message_id,
+                    self.bot_request.message_id,
                     res,
-                    self.__keyboard.get_user_messages_paginated(
+                    new_markup=self.__keyboard.get_user_messages_paginated(
                         alias,
                         new_offset,
                         l_available=new_offset > 0,
@@ -84,14 +91,14 @@ class AdminCommands(CommandsBase):
                     parse_mode=ParseMode.MARKDOWN,
                 )
         else:
-            if message_text == "/get_user_messages":
+            if self.bot_request.message_text == "/get_user_messages":
                 self.hold_next(1)
                 return self.send_message(
                     "Send the alias of user you want to get messages from",
                     reply_markup=None,
                 )
             else:
-                messages, count = self.__database.get_requests_by_alias(self.message.text)
+                messages, count = self.__database.get_requests_by_alias(self.bot_request.message_text)
                 if messages:
                     res = "\n\n".join(
                         [self.build_request_body(msg) for msg in messages]
@@ -99,10 +106,10 @@ class AdminCommands(CommandsBase):
                     return self.send_message(
                         res,
                         reply_markup=self.__keyboard.get_user_messages_paginated(
-                            self.message.text,
+                            self.bot_request.message_text,
                             0,
                             l_available=False,
-                            r_available=count > 10,
+                            r_available=count > self.pagination_step,
                         ),
                         parse_mode=ParseMode.MARKDOWN,
                     )
@@ -112,9 +119,9 @@ class AdminCommands(CommandsBase):
                     )
 
     @admin_only
-    def check_new_requests_command(self, message_text: str):
+    def check_new_requests_command(self):
         res = []
-        if message_text == "/check_new_requests":
+        if self.bot_request.message_text == "/check_new_requests":
             messages = self.__database.get_new_requests()
             if messages:
                 for msg in messages:
@@ -134,17 +141,17 @@ class AdminCommands(CommandsBase):
                 )
         return self.compound_result(tuple(res))
 
-    def new_request_action_command(self, message_text: str):
-        if message_text.startswith(self.__category_prefix):
-            request_id, command = message_text[len(self.__category_prefix):].split(":")
-            user_id = self.session.user.id
-            alias = self.session.user.username
+    def new_request_action_command(self, *args):
+        if self.bot_request.message_text.startswith(self.__category_prefix):
+            request_id, command = self.bot_request.message_text[len(self.__category_prefix):].split(":")
+            user_id = self.user.id
+            alias = self.user.username
             if command == "Take":
                 self.__database.take_request(
                     request_id=request_id, mentor_id=user_id
                 )
                 return self.edit_message(
-                    self.callback_query.message.message_id, "Taken", None
+                    self.bot_request.message_id, "Taken", None
                 )
             elif command == "Respond":
                 request = self.__database.get_request_by_id(request_id)
@@ -154,13 +161,13 @@ class AdminCommands(CommandsBase):
                 self.session["request_respond_id"] = request_id
                 self.session[
                     "new_request_message_id"
-                ] = self.callback_query.message.message_id
+                ] = self.bot_request.message_id
                 return self.send_message(f"Enter text to respond to [the user](tg://user?id={user_id})", None,
                                          parse_mode=ParseMode.MARKDOWN)
             elif command == "Close":
                 self.__database.close_request(request_id=request_id)
                 return self.edit_message(
-                    self.callback_query.message.message_id, "Closed", None
+                    self.bot_request.message_id, "Closed", None
                 )
         elif self.holding_left == 0 and self.session["new_request_message_id"] and self.session["request_respond_id"]:
             request_id = self.session["request_respond_id"]
@@ -168,13 +175,12 @@ class AdminCommands(CommandsBase):
             return self.compound_result(
                 (
                     self.edit_message(
-                        self.session["new_request_message_id"],
-                        "Your response was successfully sent",
-                        None,
+                        message_id=self.session["new_request_message_id"],
+                        new_text="Your response was successfully sent"
                     ),
                     self.send_message(
                         chat_id=user_id,
-                        text=f"*Your request was reviewed.*\nAnswer:\n```\n{message_text}\n```",
+                        text=f"*Your request was reviewed.*\nAnswer:\n```\n{self.bot_request.message_text}\n```",
                         reply_markup=None,
                         parse_mode=ParseMode.MARKDOWN,
                     ),
