@@ -142,16 +142,16 @@ class ServiceEngine(IServiceEngine):
         target_type: typing.Type = definition.source_type
         if definition.implementation_type is not None:
             target_type = definition.implementation_type
-        if target_type in created:
+        if definition.source_type in created:
             raise RuntimeError(f"Recursive injection of type {target_type} is not allowed")
 
-        if definition.lifespan == LifeSpan.SINGLETON and (definition.uuid, 0) in self.__realized:
-            return self.__realized[(target_type, 0)]
+        if definition.lifespan == LifeSpan.SINGLETON and (definition.source_type, 0) in self.__realized:
+            return self.__realized[(definition.source_type, 0)]
 
-        if definition.lifespan == LifeSpan.SCOPED and (definition.uuid, session_id) in self.__realized:
-            return self.__realized[(target_type, session_id)]
+        if definition.lifespan == LifeSpan.SCOPED and (definition.source_type, session_id) in self.__realized:
+            return self.__realized[(definition.source_type, session_id)]
 
-        created.append(target_type)
+        created.append(definition.source_type)
         ctor_signature = inspect.signature(target_type.__init__)
         param_dict = dict()
         for param_name, param_data in ctor_signature.parameters.items():
@@ -164,9 +164,9 @@ class ServiceEngine(IServiceEngine):
         obj_instance = target_type(**param_dict)
 
         if definition.lifespan == LifeSpan.SCOPED:
-            self.__realized[(target_type, session_id)] = obj_instance
+            self.__realized[(definition.source_type, session_id)] = obj_instance
         elif definition.lifespan == LifeSpan.SINGLETON:
-            self.__realized[(target_type, 0)] = obj_instance
+            self.__realized[(definition.source_type, 0)] = obj_instance
         return obj_instance
 
 

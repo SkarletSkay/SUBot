@@ -1,7 +1,9 @@
 import typing
+import telegram
 
 from resources.designer import Resources
 from runtime.commands import ModelCommandBase, CommandResult, CommandsBase
+from runtime.resources import IResourceProvider
 
 
 class Request:
@@ -27,5 +29,10 @@ class Handler(ModelCommandBase):
 
 class MyCommands(CommandsBase):
 
+    def __init__(self, res: IResourceProvider):
+        super().__init__()
+        self.res = res
+
     def start_command(self, args):
-        return self.send_message(resource=Resources.Strings.CONFIRM_SENDING)
+        string = self.res.get_string(Resources.Strings.CONFIRM_SENDING)
+        return self.send_message(text="<i>Говно</i>", parse_mode=telegram.ParseMode.HTML)
