@@ -86,12 +86,12 @@ class CommandsBase:
     def hold_next(self, duration: int = 1):
         self.session["__holding__"] = duration
 
-    def send_message(self, user_id: int = None, text: typing.Optional[str] = None, resource: typing.Optional[str] = None, reply_markup: telegram.ReplyMarkup = None) -> CommandResult:
+    def send_message(self, user_id: int = None, text: typing.Optional[str] = None, parse_mode: telegram.ParseMode = None, resource: typing.Optional[str] = None, reply_markup: telegram.ReplyMarkup = None) -> CommandResult:
         if resource is not None:
             text = self.resources.get_string(resource)
         if user_id is None:
             user_id = self.user.id
-        result = MessageResult(text, user_id, reply_markup)
+        result = MessageResult(text, user_id, parse_mode, reply_markup)
         return result
 
     def no_message(self) -> CommandResult:
@@ -103,7 +103,9 @@ class CommandsBase:
         self.session["__redir__"] = 1
         return RedirectToCommandResult()
 
-    def send_message_list(self, messages_list: typing.Optional[typing.List[str]] = None, messages_resources: typing.Optional[typing.List[str]] = None, message_array: typing.Optional[str] = None):
+    def send_message_list(self, messages_list: typing.Optional[typing.List[str]] = None,
+                          messages_resources: typing.Optional[typing.List[str]] = None,
+                          message_array: typing.Optional[str] = None):
         if message_array is not None:
             messages_list = self.resources.get_string_array(message_array)
         elif messages_resources is not None:
@@ -114,7 +116,8 @@ class CommandsBase:
         result = MessageListResult(self.user.id, messages_list)
         return result
 
-    def edit_message(self, message_id: int, user_id: int = None, new_text: typing.Optional[str] = None, new_text_resource: typing.Optional[str] = None, new_markup: telegram.ReplyMarkup = None):
+    def edit_message(self, message_id: int, user_id: int = None, new_text: typing.Optional[str] = None,
+                     new_text_resource: typing.Optional[str] = None, new_markup: telegram.ReplyMarkup = None):
         if new_text_resource is not None:
             new_text = self.resources.get_string(new_text_resource)
         if user_id is None:
@@ -122,7 +125,8 @@ class CommandsBase:
         result = EditMessageResult(user_id, message_id, new_text, new_markup)
         return result
 
-    def reply_to_message(self, message_id: int, user_id: int = None, text: typing.Optional[str] = None, text_resource: typing.Optional[str] = None, reply_markup: telegram.ReplyMarkup = None):
+    def reply_to_message(self, message_id: int, user_id: int = None, text: typing.Optional[str] = None,
+                         text_resource: typing.Optional[str] = None, reply_markup: telegram.ReplyMarkup = None):
         if text_resource is not None:
             text = self.resources.get_string(text_resource)
         if user_id is None:
@@ -133,7 +137,8 @@ class CommandsBase:
     def compound_result(self, results: typing.Tuple[CommandResult, ...]):
         return CompoundResult(list(results))
 
-    def send_or_edit_message(self, message_id: int, user_id: int = None, text: str = None, text_resource: str = None, reply_markup: telegram.InlineKeyboardMarkup = None):
+    def send_or_edit_message(self, message_id: int, user_id: int = None, text: str = None, text_resource: str = None,
+                             reply_markup: telegram.InlineKeyboardMarkup = None):
         message_text = text
         if text_resource is not None:
             message_text = self.resources.get_string(text_resource)
@@ -153,13 +158,14 @@ class CompoundResult(CommandResult):
 
 class MessageResult(CommandResult):
 
-    def __init__(self, message: str, chat_id: int, reply_markup):
+    def __init__(self, message: str, chat_id: int, parse_mode: telegram.ParseMode, reply_markup):
         self.__message = message
         self.__chat_id = chat_id
         self.__markup = reply_markup
+        self.__parse_mode = parse_mode
 
     def execute(self, bot: telegram.Bot):
-        bot.send_message(self.__chat_id, self.__message, reply_markup=self.__markup)
+        bot.send_message(self.__chat_id, self.__message, reply_markup=self.__markup, parse_mode=self.__parse_mode)
 
     def attach_to(self, response: BotResponse):
         response.add_action(self)
@@ -228,7 +234,8 @@ class EditMessageMarkupResult(CommandResult):
         self.__message_id = message_id
 
     def execute(self, bot: telegram.Bot):
-        bot.edit_message_reply_markup(chat_id=self.__chat_id, message_id=self.__message_id, reply_markup=self.__new_markup)
+        bot.edit_message_reply_markup(chat_id=self.__chat_id, message_id=self.__message_id,
+                                      reply_markup=self.__new_markup)
 
     def attach_to(self, response: BotResponse):
         response.add_action(self)
