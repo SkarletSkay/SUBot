@@ -35,4 +35,4 @@ class MyCommands(CommandsBase):
 
     def start_command(self, args):
         string = self.res.get_string(Resources.Strings.CONFIRM_SENDING)
-        return self.send_message(text="<i>Говно</i>", parse_mode=telegram.ParseMode.HTML)
+        return self.send_message(text=f"<i>{string}</i>", parse_mode=telegram.ParseMode.HTML)
