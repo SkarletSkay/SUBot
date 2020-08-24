@@ -17,9 +17,9 @@ from runtime.user import User
 class Pipeline:
 
     def __init__(self):
-        self.__app_builder = typing.Optional[ApplicationBuilder]
-        self.__polling_daemon = typing.Optional[threading.Thread]
-        self.__services = typing.Optional[ServiceCollection]
+        self.__app_builder: typing.Optional[ApplicationBuilder] = None
+        self.__polling_daemon: typing.Optional[threading.Thread] = None
+        self.__services: typing.Optional[ServiceCollection] = None
 
     def configure(self, app_builder: ApplicationBuilder, services: ServiceCollection):
         self.__app_builder = app_builder

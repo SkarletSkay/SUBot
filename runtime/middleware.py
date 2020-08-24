@@ -461,4 +461,4 @@ class ErrorHandlerMiddleware(Middleware):
             self.invoke_next(context)
         except Exception as exception:
             self.__logger.error(str(exception.__class__) + " " + str(exception))
-            MessageResult("Oops, something went wrong. Please, contact SU head and tell your user id: " + str(context.user.id), context.user.id, None).attach_to(context.bot_response)
+            MessageResult("Oops, something went wrong. Please, contact SU head and tell your user id: " + str(context.user.id), context.user.id).attach_to(context.bot_response)
