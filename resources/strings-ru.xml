@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<resource>
+    <string name="yes">Да</string>
+    <string name="no">Нет</string>
+    <string name="enter_title_hint">Введите заголовок запроса</string>
+    <string name="enter_description_hint">Введите описание запроса</string>
+    <string name="choose_category">Выберите категорию:</string>
+    <string name="back">Назад</string>
+    <string name="edit">Редактировать</string>
+    <string name="confirm_sending">Отправить запрос?</string>
+    <string name="confirm_cancel">Вы уверены, что хотите отменить?</string>
+    <string name="send">Отправить</string>
+    <string name="cancel">Отмена</string>
+    <string name="title">Заголовок</string>
+    <string name="description">Описание</string>
+    <string name="category">Категория</string>
+    <string name="invalid_value">Неверное значение. Напишите другое</string>
+    <string name="is_notify">Уведомить вас при изменении статуса?</string>
+    <string-array name="categories">
+        <item>Категория 1</item>
+        <item>Категория 2</item>
+        <item>Категория 3</item>
+    </string-array>
+</resource>

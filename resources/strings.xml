@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<resource>
+    <string name="yes">yes</string>
+    <string name="no">no</string>
+    <string name="enter_title_hint">Enter title</string>
+    <string name="enter_description_hint">Enter description</string>
+    <string name="back">Back</string>
+    <string name="choose_category">Choose category:</string>
+    <string name="edit">Edit</string>
+    <string name="confirm_sending">Are you sure you want to send request?</string>
+    <string name="confirm_cancel">Are you sure you want to cancel creating of request?</string>
+    <string name="send">Send</string>
+    <string name="title">Title</string>
+    <string name="description">Description</string>
+    <string name="category">Category</string>
+    <string name="cancel">Cancel</string>
+    <string name="invalid_value">Invalid value of property. Try writing another value</string>
+    <string name="is_notify">Should we send a message when status is changed?</string>
+    <string-array name="categories">
+        <item>Category 1</item>
+        <item>Category 2</item>
+        <item>Category 3</item>
+    </string-array>
+</resource>
